@@ -1,1 +1,1 @@
-web: gunicorn rentalmap:app
+web:gunicorn rentalmap:app
