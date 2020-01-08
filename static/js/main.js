@@ -1,165 +1,217 @@
-const data = [
-    {category: 'American Indian or Alaska Native',
-     values: [
-        {pop: 74, year: '2016'},
-        {pop: 93, year: '2017'},
-        {pop: 84, year: '2018'},
-        {pop: 78, year: '2019'}
-    ]
-    },
-    {category: 'Black or African American',
-     values: [
-        {pop: 224, year: '2016'},
-        {pop: 223, year: '2017'},
-        {pop: 188, year: '2018'},
-        {pop: 163, year: '2019'}
-    ]
-    },
-    {category: 'General Asian',
-     values: [
-        {pop: 3735, year: '2016'},
-        {pop: 3718, year: '2017'},
-        {pop: 3653, year: '2018'},
-        {pop: 3546, year: '2019'}
-    ]
-    },
-    {category: 'Hispanic/Latino',
-     values: [
-        {pop: 4150, year: '2016'},
-        {pop: 4021, year: '2017'},
-        {pop: 3961, year: '2018'},
-        {pop: 3785, year: '2019'}
-    ]
-    },
-    {category: 'Pacific Islander',
-     values: [
-        {pop: 288, year: '2016'},
-        {pop: 299, year: '2017'},
-        {pop: 241, year: '2018'},
-        {pop: 237, year: '2019'}
-    ]
-    },
-    {category: 'Undefined',
-     values: [
-        {pop: 46, year: '2016'},
-        {pop: 77, year: '2017'},
-        {pop: 76, year: '2018'},
-        {pop: 77, year: '2019'}
-    ]
-    },
-    {category: 'White',
-     values: [
-        {pop: 958, year: '2016'},
-        {pop: 904, year: '2017'},
-        {pop: 874, year: '2018'},
-        {pop: 852, year: '2019'}
-    ]
-    }
-];
+/*
+	Helios by HTML5 UP
+	html5up.net | @ajlkn
+	Free for personal and commercial use under the CCA 3.0 license (html5up.net/license)
+*/
 
-    var margin = {top: 20, right: 20, bottom: 180, left: 40},
-    width = 800 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
+(function($) {
 
+	var	$window = $(window),
+		$body = $('body'),
+		settings = {
 
+			// Carousels
+				carousels: {
+					speed: 4,
+					fadeIn: true,
+					fadeDelay: 250
+				},
 
-    var x0  = d3.scaleBand().rangeRound([0, width], .5);
-    var x1  = d3.scaleBand();
-    var y   = d3.scaleLinear().rangeRound([height, 0]);
+		};
 
-    var xAxis = d3.axisBottom().scale(x0)
-                                // .tickFormat(d3.timeFormat("Week %V"))
-                                .tickValues(data.map(d=>d.category));
+	// Breakpoints.
+		breakpoints({
+			wide:      [ '1281px',  '1680px' ],
+			normal:    [ '961px',   '1280px' ],
+			narrow:    [ '841px',   '960px'  ],
+			narrower:  [ '737px',   '840px'  ],
+			mobile:    [ null,      '736px'  ]
+		});
 
-    var yAxis = d3.axisLeft().scale(y);
+	// Play initial animations on page load.
+		$window.on('load', function() {
+			window.setTimeout(function() {
+				$body.removeClass('is-preload');
+			}, 100);
+		});
 
-    const color = d3.scaleOrdinal(d3.schemeCategory10);
+	// Dropdowns.
+		$('#nav > ul').dropotron({
+			mode: 'fade',
+			speed: 350,
+			noOpenerFade: true,
+			alignment: 'center'
+		});
 
-    var svg = d3.select('body').append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-    .append("g")
-    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+	// Scrolly.
+		$('.scrolly').scrolly();
 
-    var categoryNames = data.map(function(d) { return d.category; });
-    var year = data[0].values.map(function(d) { return d.year; });
+	// Nav.
 
-    x0.domain(categoryNames);
-    x1.domain(year).rangeRound([0, x0.bandwidth()]);
-    y.domain([0, d3.max(data, function(key) { return d3.max(key.values, function(d) { return d.pop; }); })]);
+		// Button.
+			$(
+				'<div id="navButton">' +
+					'<a href="#navPanel" class="toggle"></a>' +
+				'</div>'
+			)
+				.appendTo($body);
 
-    svg.append("g")
-      .attr("class", "x axis")
-      .attr("transform", "translate(0," + height + ")")
-      .call(xAxis)
-      .selectAll("text")
-        .attr("transform", function(d) {return "rotate(-90)"})
-        .style("text-anchor", "end")
-        .style('font-weight','bold');
+		// Panel.
+			$(
+				'<div id="navPanel">' +
+					'<nav>' +
+						$('#nav').navList() +
+					'</nav>' +
+				'</div>'
+			)
+				.appendTo($body)
+				.panel({
+					delay: 500,
+					hideOnClick: true,
+					hideOnSwipe: true,
+					resetScroll: true,
+					resetForms: true,
+					target: $body,
+					visibleClass: 'navPanel-visible'
+				});
 
+	// Carousels.
+		$('.carousel').each(function() {
 
-    svg.append("g")
-      .attr("class", "y axis")
-      .style('opacity','0')
-      .call(yAxis)
-        .append("text")
-            .attr("transform", "rotate(-90)")
-            .attr("y", 6)
-            .attr("dy", ".71em")
-            .style("text-anchor", "end")
-            .style('font-weight','bold')
-            .text("Value");
+			var	$t = $(this),
+				$forward = $('<span class="forward"></span>'),
+				$backward = $('<span class="backward"></span>'),
+				$reel = $t.children('.reel'),
+				$items = $reel.children('article');
 
-    svg.select('.y').transition().duration(500).delay(1300).style('opacity','1');
+			var	pos = 0,
+				leftLimit,
+				rightLimit,
+				itemWidth,
+				reelWidth,
+				timerId;
 
-    var slice = svg.selectAll(".slice")
-      .data(data)
-      .enter().append("g")
-      .attr("class", "g")
-      .attr("transform",function(d) { return "translate(" + x0(d.category) + ",0)"; });
+			// Items.
+				if (settings.carousels.fadeIn) {
 
-      slice.selectAll("rect")
-      .data(function(d) { return d.values; })
-        .enter().append("rect")
-            .attr("width", x1.bandwidth())
-            .attr("x", function(d) { return x1(d.year); })
-             .style("fill", function(d) { return color(d.year) })
-             .attr("y", function(d) { return y(0); })
-             .attr("height", function(d) { return height - y(0); })
-            .on("mouseover", function(d) {
-                d3.select(this).style("fill", d3.rgb(color(d.year)).darker(2));
-            })
-            .on("mouseout", function(d) {
-                d3.select(this).style("fill", color(d.year));
-            });
+					$items.addClass('loading');
 
+					$t.scrollex({
+						mode: 'middle',
+						top: '-20vh',
+						bottom: '-20vh',
+						enter: function() {
 
-    slice.selectAll("rect")
-      .transition()
-      .delay(function (d) {return Math.random()*1000;})
-      .duration(1000)
-      .attr("y", function(d) { return y(d.pop); })
-      .attr("height", function(d) { return height - y(d.pop); });
+							var	timerId,
+								limit = $items.length - Math.ceil($window.width() / itemWidth);
 
-      //Legend
-  var legend = svg.selectAll(".legend")
-      .data(data[0].values.map(function(d) { return d.year; }).reverse())
-  .enter().append("g")
-      .attr("class", "legend")
-      .attr("transform", function(d,i) { return "translate(0," + i * 20 + ")"; })
-      .style("opacity","0");
+							timerId = window.setInterval(function() {
+								var x = $items.filter('.loading'), xf = x.first();
 
-  legend.append("rect")
-      .attr("x", width - 18)
-      .attr("width", 18)
-      .attr("height", 18)
-      .style("fill", function(d) { return color(d); });
+								if (x.length <= limit) {
 
-  legend.append("text")
-      .attr("x", width - 24)
-      .attr("y", 9)
-      .attr("dy", ".35em")
-      .style("text-anchor", "end")
-      .text(function(d) {return d; });
+									window.clearInterval(timerId);
+									$items.removeClass('loading');
+									return;
 
-  legend.transition().duration(500).delay(function(d,i){ return 1300 + 100 * i; }).style("opacity","1");
+								}
+
+								xf.removeClass('loading');
+
+							}, settings.carousels.fadeDelay);
+
+						}
+					});
+
+				}
+
+			// Main.
+				$t._update = function() {
+					pos = 0;
+					rightLimit = (-1 * reelWidth) + $window.width();
+					leftLimit = 0;
+					$t._updatePos();
+				};
+
+				$t._updatePos = function() { $reel.css('transform', 'translate(' + pos + 'px, 0)'); };
+
+			// Forward.
+				$forward
+					.appendTo($t)
+					.hide()
+					.mouseenter(function(e) {
+						timerId = window.setInterval(function() {
+							pos -= settings.carousels.speed;
+
+							if (pos <= rightLimit)
+							{
+								window.clearInterval(timerId);
+								pos = rightLimit;
+							}
+
+							$t._updatePos();
+						}, 10);
+					})
+					.mouseleave(function(e) {
+						window.clearInterval(timerId);
+					});
+
+			// Backward.
+				$backward
+					.appendTo($t)
+					.hide()
+					.mouseenter(function(e) {
+						timerId = window.setInterval(function() {
+							pos += settings.carousels.speed;
+
+							if (pos >= leftLimit) {
+
+								window.clearInterval(timerId);
+								pos = leftLimit;
+
+							}
+
+							$t._updatePos();
+						}, 10);
+					})
+					.mouseleave(function(e) {
+						window.clearInterval(timerId);
+					});
+
+			// Init.
+				$window.on('load', function() {
+
+					reelWidth = $reel[0].scrollWidth;
+
+					if (browser.mobile) {
+
+						$reel
+							.css('overflow-y', 'hidden')
+							.css('overflow-x', 'scroll')
+							.scrollLeft(0);
+						$forward.hide();
+						$backward.hide();
+
+					}
+					else {
+
+						$reel
+							.css('overflow', 'visible')
+							.scrollLeft(0);
+						$forward.show();
+						$backward.show();
+
+					}
+
+					$t._update();
+
+					$window.on('resize', function() {
+						reelWidth = $reel[0].scrollWidth;
+						$t._update();
+					}).trigger('resize');
+
+				});
+
+		});
+
+})(jQuery);
